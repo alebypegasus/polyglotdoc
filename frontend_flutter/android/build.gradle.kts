@@ -1,3 +1,14 @@
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath("com.android.tools.build:gradle:8.7.0")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:2.1.0")
+    }
+}
+
 allprojects {
     repositories {
         google()
@@ -17,17 +28,9 @@ subprojects {
 }
 
 subprojects {
-    project.plugins.withId("com.android.library") {
-        val android = project.extensions.findByName("android")
-        if (android != null) {
-            try {
-                val method = android.javaClass.methods.firstOrNull { 
-                    it.name == "compileSdkVersion" && 
-                    it.parameterTypes.size == 1 && 
-                    it.parameterTypes[0] == Int::class.javaPrimitiveType 
-                }
-                method?.invoke(android, 35)
-            } catch (_: Throwable) {}
+    plugins.withId("com.android.library") {
+        (extensions.findByName("android") as? com.android.build.gradle.BaseExtension)?.apply {
+            compileSdkVersion(35)
         }
     }
 }
