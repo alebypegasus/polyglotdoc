@@ -6,6 +6,10 @@ on:
     tags: [ "v*" ]
   pull_request:
     branches: [ "main", "master" ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   backend-test:
@@ -30,21 +34,16 @@ jobs:
 
   build-macos:
     name: Build macOS Universal DMG
-    runs-on: macos-latest
+    runs-on: macos-14
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.24.x"
           channel: "stable"
-      - name: Build macOS Release
+          cache: true
+      - name: Build macOS Release & DMG
         run: |
-          cd frontend_flutter
-          flutter pub get
-          flutter build macos --release
-      - name: Create DMG
-        run: |
-          mkdir -p dist/macos
+          chmod +x packaging/macos/build_dmg.sh
           ./packaging/macos/build_dmg.sh
       - name: Upload macOS Artifact
         uses: actions/upload-artifact@v4
@@ -59,16 +58,12 @@ jobs:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.24.x"
           channel: "stable"
-      - name: Build Windows
+          cache: true
+      - name: Build Windows Release & ZIP
+        shell: pwsh
         run: |
-          cd frontend_flutter
-          flutter pub get
-          flutter build windows --release
-      - name: Package Windows ZIP
-        run: |
-          pwsh ./packaging/windows/build_windows.ps1
+          ./packaging/windows/build_windows.ps1
       - name: Upload Windows Artifact
         uses: actions/upload-artifact@v4
         with:
@@ -86,14 +81,11 @@ jobs:
           sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.24.x"
           channel: "stable"
-      - name: Build Linux
+          cache: true
+      - name: Build Linux Release & Packages
         run: |
-          cd frontend_flutter
-          flutter pub get
-          flutter build linux --release
-          cd ..
+          chmod +x packaging/linux/build_linux.sh
           ./packaging/linux/build_linux.sh
       - name: Upload Linux Artifacts
         uses: actions/upload-artifact@v4
@@ -112,8 +104,8 @@ jobs:
           java-version: "17"
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.24.x"
           channel: "stable"
+          cache: true
       - name: Build Android APK
         run: |
           cd frontend_flutter
@@ -124,3 +116,23 @@ jobs:
         with:
           name: PolyGlotDoc_AI_Android_APK
           path: frontend_flutter/build/app/outputs/flutter-apk/*.apk
+
+  release:
+    name: Create GitHub Release
+    needs: [backend-test, build-macos, build-windows, build-linux, build-android]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release_assets
+          merge-multiple: true
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release_assets/*
+          draft: false
+          prerelease: false
+          generate_release_notes: true
