@@ -22,10 +22,14 @@ subprojects {
 
 subprojects {
     afterEvaluate {
-        if (plugins.hasPlugin("com.android.library") || plugins.hasPlugin("com.android.application")) {
-            extensions.findByType(com.android.build.gradle.BaseExtension::class.java)?.apply {
-                compileSdkVersion(35)
-            }
+        val android = project.extensions.findByName("android")
+        if (android != null) {
+            try {
+                val setCompileSdk = android.javaClass.methods.firstOrNull { 
+                    it.name == "compileSdkVersion" && it.parameterTypes.size == 1 
+                }
+                setCompileSdk?.invoke(android, 35)
+            } catch (_: Throwable) {}
         }
     }
 }
