@@ -15,11 +15,23 @@ cd /d "%FLUTTER_DIR%"
 echo Running Flutter build windows --release...
 call flutter build windows --release
 if errorlevel 1 (
-    echo Error during build!
+    echo Error during Flutter build!
     exit /b %errorlevel%
 )
 
 echo Windows build completed successfully!
-echo Binary located at: %FLUTTER_DIR%\build\windows\x64\runner\Release\
-echo To build the setup installer, compile packaging\windows\installer.iss with InnoSetup.
+
+REM Check for Inno Setup compiler
+set "ISCC_EXE="
+if exist "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" set "ISCC_EXE=C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+if exist "C:\Program Files\Inno Setup 6\ISCC.exe" set "ISCC_EXE=C:\Program Files\Inno Setup 6\ISCC.exe"
+
+if defined ISCC_EXE (
+    echo Compiling Setup Installer with Inno Setup...
+    "%ISCC_EXE%" "%ROOT_DIR%\packaging\windows\installer.iss"
+    echo Setup installer generated in %DIST_DIR%!
+) else (
+    echo To build the setup installer, compile packaging\windows\installer.iss with InnoSetup.
+)
+
 endlocal

@@ -17,76 +17,94 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: "pip"
+
       - name: Install dependencies
         run: |
           cd backend_fastapi
           pip install --upgrade pip
           pip install -r requirements.txt
           pip install pytest pytest-asyncio httpx
+
       - name: Run Pytest
         run: |
+          export PYTHONPATH="$PWD:$PWD/backend_fastapi"
           cd backend_fastapi
-          pytest || true
+          pytest
 
   build-macos:
-    name: Build macOS Universal DMG
-    runs-on: macos-14
+    name: Build macOS Universal DMG & ZIP
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: subosito/flutter-action@v2
         with:
           channel: "stable"
           cache: true
-      - name: Build macOS Release & DMG
+
+      - name: Build macOS Installer (DMG)
         run: |
           chmod +x packaging/macos/build_dmg.sh
           ./packaging/macos/build_dmg.sh
-      - name: Upload macOS Artifact
+
+      - name: Upload macOS Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: PolyGlotDoc_AI_macOS_DMG
-          path: dist/macos/*.dmg
+          name: PolyGlotDoc_AI_macOS
+          path: dist/macos/*
 
   build-windows:
-    name: Build Windows Release
+    name: Build Windows Release (EXE & ZIP)
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: subosito/flutter-action@v2
         with:
           channel: "stable"
           cache: true
-      - name: Build Windows Release & ZIP
-        shell: pwsh
+
+      - name: Install Inno Setup
         run: |
-          ./packaging/windows/build_windows.ps1
-      - name: Upload Windows Artifact
+          choco install innosetup -y --no-progress
+
+      - name: Build and Package Windows
+        run: |
+          pwsh ./packaging/windows/build_windows.ps1
+
+      - name: Upload Windows Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: PolyGlotDoc_AI_Windows
-          path: dist/windows/*.zip
+          path: dist/windows/*
 
   build-linux:
-    name: Build Linux Packages (.tar.gz / .deb)
+    name: Build Linux Packages (.deb & .tar.gz)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - name: Install Linux build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libstdc++-12-dev
+
       - uses: subosito/flutter-action@v2
         with:
           channel: "stable"
           cache: true
-      - name: Build Linux Release & Packages
+
+      - name: Build Linux Release and Packages
         run: |
           chmod +x packaging/linux/build_linux.sh
           ./packaging/linux/build_linux.sh
+
       - name: Upload Linux Artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -94,32 +112,57 @@ jobs:
           path: dist/linux/*
 
   build-android:
-    name: Build Android APKs & Bundle
+    name: Build Android APKs & Bundle (.apk & .aab)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-java@v4
         with:
           distribution: "temurin"
           java-version: "17"
+
       - uses: subosito/flutter-action@v2
         with:
           channel: "stable"
           cache: true
-      - name: Build Android APK
+
+      - name: Build Android APKs & Bundle
         run: |
-          cd frontend_flutter
-          flutter pub get
-          flutter build apk --release
-      - name: Upload Android APK
+          chmod +x packaging/android/build_apk.sh
+          ./packaging/android/build_apk.sh
+
+      - name: Upload Android Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: PolyGlotDoc_AI_Android_APK
-          path: frontend_flutter/build/app/outputs/flutter-apk/*.apk
+          name: PolyGlotDoc_AI_Android
+          path: dist/android/*
+
+  build-ios:
+    name: Build iOS Package (.ipa)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+          cache: true
+
+      - name: Build iOS IPA
+        run: |
+          chmod +x packaging/ios/build_ipa.sh
+          ./packaging/ios/build_ipa.sh
+
+      - name: Upload iOS Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: PolyGlotDoc_AI_iOS
+          path: dist/ios/*
 
   release:
-    name: Create GitHub Release
-    needs: [backend-test, build-macos, build-windows, build-linux, build-android]
+    name: Publish Multi-Platform Release
+    needs: [backend-test, build-macos, build-windows, build-linux, build-android, build-ios]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
     steps:
@@ -129,10 +172,18 @@ jobs:
           path: release_assets
           merge-multiple: true
 
-      - name: Create Release
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: release_assets/*
+          files: |
+            release_assets/*.dmg
+            release_assets/*.zip
+            release_assets/*.exe
+            release_assets/*.deb
+            release_assets/*.tar.gz
+            release_assets/*.apk
+            release_assets/*.aab
+            release_assets/*.ipa
           draft: false
           prerelease: false
           generate_release_notes: true

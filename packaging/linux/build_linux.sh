@@ -13,10 +13,18 @@ DIST_DIR="$ROOT_DIR/dist/linux"
 mkdir -p "$DIST_DIR"
 
 cd "$FLUTTER_DIR"
-echo ">> Compiling Flutter Linux release..."
-flutter build linux --release
-
 RELEASE_DIR="$FLUTTER_DIR/build/linux/x64/release/bundle"
+
+if [ ! -d "$RELEASE_DIR" ]; then
+    echo ">> Compiling Flutter Linux release..."
+    flutter build linux --release
+fi
+
+if [ ! -d "$RELEASE_DIR" ]; then
+    echo "Error: Release bundle not found in $RELEASE_DIR"
+    exit 1
+fi
+
 TAR_PATH="$DIST_DIR/PolyGlotDoc_AI_Linux_x86_64.tar.gz"
 
 echo ">> Creating .tar.gz bundle..."
@@ -32,9 +40,12 @@ mkdir -p "$DEB_ROOT/usr/share/pixmaps"
 mkdir -p "$DEB_ROOT/DEBIAN"
 
 cp -r "$RELEASE_DIR"/* "$DEB_ROOT/usr/share/polyglotdoc/"
+chmod +x "$DEB_ROOT/usr/share/polyglotdoc/frontend_flutter"
 ln -sf "/usr/share/polyglotdoc/frontend_flutter" "$DEB_ROOT/usr/bin/polyglotdoc"
 
-cp "$FLUTTER_DIR/assets/icon/app_icon_128.png" "$DEB_ROOT/usr/share/pixmaps/polyglotdoc.png"
+if [ -f "$FLUTTER_DIR/assets/icon/app_icon_128.png" ]; then
+    cp "$FLUTTER_DIR/assets/icon/app_icon_128.png" "$DEB_ROOT/usr/share/pixmaps/polyglotdoc.png"
+fi
 
 cat <<EOF > "$DEB_ROOT/usr/share/applications/polyglotdoc.desktop"
 [Desktop Entry]

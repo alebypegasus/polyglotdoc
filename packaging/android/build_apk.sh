@@ -14,15 +14,23 @@ mkdir -p "$DIST_DIR"
 
 cd "$FLUTTER_DIR"
 
-echo ">> Compiling Android Release APKs..."
+echo ">> Compiling Android Universal Release APK..."
+flutter build apk --release
+if [ -f "$FLUTTER_DIR/build/app/outputs/flutter-apk/app-release.apk" ]; then
+    cp "$FLUTTER_DIR/build/app/outputs/flutter-apk/app-release.apk" "$DIST_DIR/PolyGlotDoc_AI_Android_Universal.apk"
+fi
+
+echo ">> Compiling Android Release APKs (split per ABI)..."
 flutter build apk --release --split-per-abi
 
-echo ">> Copying APKs to dist/android..."
+echo ">> Copying Split APKs to dist/android..."
 cp "$FLUTTER_DIR/build/app/outputs/flutter-apk/"app-*.apk "$DIST_DIR/" 2>/dev/null || true
 
 echo ">> Compiling Android App Bundle (AAB for Google Play)..."
 flutter build appbundle --release
-cp "$FLUTTER_DIR/build/app/outputs/bundle/release/app-release.aab" "$DIST_DIR/PolyGlotDoc_AI_Release.aab" 2>/dev/null || true
+if [ -f "$FLUTTER_DIR/build/app/outputs/bundle/release/app-release.aab" ]; then
+    cp "$FLUTTER_DIR/build/app/outputs/bundle/release/app-release.aab" "$DIST_DIR/PolyGlotDoc_AI_Release.aab"
+fi
 
 echo "=========================================="
 echo " Android builds available at: $DIST_DIR"
