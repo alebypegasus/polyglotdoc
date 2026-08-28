@@ -2,8 +2,23 @@ import pytest
 import fitz
 import tempfile
 from pathlib import Path
+from unittest.mock import patch
 from backend_fastapi.app.engine.pdf_processor import pdf_processor
 from backend_fastapi.app.services.ai_translator import ai_translator, DocumentTranslationContext
+
+async def _mock_real_translation(blocks, source_lang, target_lang):
+    translations = {
+        "Chapter 1: Quantum Physics Introduction": "Capítulo 1: Introdução à Física Quântica",
+        "This document explains artificial intelligence and machine learning principles.": "Este documento explica princípios de Inteligência Artificial.",
+        "Chapter 2: System Architecture": "Capítulo 2: Arquitetura do Sistema",
+        "High performance software engineering in modern data pipelines.": "Engenharia de software em pipelines modernos.",
+        "Chapter 1: Overview and System Architecture": "Capítulo 1: Visão Geral e Arquitetura do Sistema",
+        "This is high performance software": "Este é um software de alta performance"
+    }
+    return [
+        {"id": b["id"], "translated_text": translations.get(b["text"].strip(), f"Traduzido: {b['text']}")}
+        for b in blocks
+    ]
 
 @pytest.mark.asyncio
 async def test_pdf_extraction_and_reconstruction():
@@ -34,12 +49,13 @@ async def test_pdf_extraction_and_reconstruction():
     async def _on_progress(event):
         progress_events.append(event)
 
-    res = await pdf_processor.process_pdf(
-        input_path=in_path,
-        output_path=out_path,
-        target_language="pt-br",
-        progress_callback=_on_progress
-    )
+    with patch.object(ai_translator, "_real_translation_deep_translator", side_effect=_mock_real_translation):
+        res = await pdf_processor.process_pdf(
+            input_path=in_path,
+            output_path=out_path,
+            target_language="pt-br",
+            progress_callback=_on_progress
+        )
 
     assert res["total_pages"] == 2
     assert Path(out_path).exists()
@@ -64,7 +80,8 @@ async def test_ai_translator_contextual():
         {"id": 0, "text": "Chapter 1: Overview and System Architecture"},
         {"id": 1, "text": "This is high performance software"}
     ]
-    translated = await ai_translator.translate_blocks(blocks, context, page_num=1, total_pages=1)
+    with patch.object(ai_translator, "_real_translation_deep_translator", side_effect=_mock_real_translation):
+        translated = await ai_translator.translate_blocks(blocks, context, page_num=1, total_pages=1)
     assert len(translated) == 2
     assert translated[0]["translated_text"] != ""
     assert "Capítulo" in translated[0]["translated_text"] or "Arquitetura" in translated[0]["translated_text"]
