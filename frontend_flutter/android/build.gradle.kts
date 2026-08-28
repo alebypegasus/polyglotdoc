@@ -17,21 +17,23 @@ subprojects {
 }
 
 subprojects {
-    project.evaluationDependsOn(":app")
-}
-
-subprojects {
-    afterEvaluate {
+    project.plugins.withId("com.android.library") {
         val android = project.extensions.findByName("android")
         if (android != null) {
             try {
-                val setCompileSdk = android.javaClass.methods.firstOrNull { 
-                    it.name == "compileSdkVersion" && it.parameterTypes.size == 1 
+                val method = android.javaClass.methods.firstOrNull { 
+                    it.name == "compileSdkVersion" && 
+                    it.parameterTypes.size == 1 && 
+                    it.parameterTypes[0] == Int::class.javaPrimitiveType 
                 }
-                setCompileSdk?.invoke(android, 35)
+                method?.invoke(android, 35)
             } catch (_: Throwable) {}
         }
     }
+}
+
+subprojects {
+    project.evaluationDependsOn(":app")
 }
 
 tasks.register<Delete>("clean") {

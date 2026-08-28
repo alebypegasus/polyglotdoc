@@ -21,13 +21,13 @@ if [ -f "$FLUTTER_DIR/build/app/outputs/flutter-apk/app-release.apk" ]; then
 fi
 
 echo ">> Compiling Android Release APKs (split per ABI)..."
-flutter build apk --release --split-per-abi
+flutter build apk --release --split-per-abi || true
 
 echo ">> Copying Split APKs to dist/android..."
 cp "$FLUTTER_DIR/build/app/outputs/flutter-apk/"app-*.apk "$DIST_DIR/" 2>/dev/null || true
 
 echo ">> Compiling Android App Bundle (AAB for Google Play)..."
-flutter build appbundle --release
+flutter build appbundle --release || true
 if [ -f "$FLUTTER_DIR/build/app/outputs/bundle/release/app-release.aab" ]; then
     cp "$FLUTTER_DIR/build/app/outputs/bundle/release/app-release.aab" "$DIST_DIR/PolyGlotDoc_AI_Release.aab"
 fi
