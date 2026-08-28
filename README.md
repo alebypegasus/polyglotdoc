@@ -113,7 +113,13 @@ iscc ./packaging/windows/installer.iss
 ### Android (APKs e AAB)
 ```bash
 ./packaging/android/build_apk.sh
-# APKs por arquitetura (arm64-v8a, armeabi-v7a, x86_64) gerados em: dist/android/
+# APKs por arquitetura (arm64-v8a, armeabi-v7a, x86_64) e pacote universal gerados em: dist/android/
+```
+
+### iOS (Pacote IPA para Sideloading / AltStore / TrollStore)
+```bash
+./packaging/ios/build_ipa.sh
+# O pacote .ipa gerado estará em: dist/ios/PolyGlotDoc_AI_iOS_Unsigned.ipa
 ```
 
 ---

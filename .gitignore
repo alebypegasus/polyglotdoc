@@ -57,3 +57,7 @@ Desktop.ini
 *.swo
 *.iml
 frontend_flutter/*.iml
+*.xcworkspace/xcshareddata/
+*.xcworkspace/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcshareddata/
+*.xcodeproj/project.xcworkspace/xcuserdata/

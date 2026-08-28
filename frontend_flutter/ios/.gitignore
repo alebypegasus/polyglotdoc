@@ -9,6 +9,7 @@
 .tags*
 **/.vagrant/
 **/DerivedData/
+**/xcshareddata/
 Icon?
 **/Pods/
 **/.symlinks/
