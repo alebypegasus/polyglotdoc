@@ -1,0 +1,59 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# C extensions
+.Python
+backend_fastapi/.venv/
+backend_fastapi/venv/
+.venv/
+venv/
+ENV/
+env/
+.pytest_cache/
+.coverage
+htmlcov/
+*.egg-info/
+dist/
+
+# Storage & Dynamic Uploads
+backend_fastapi/storage/uploads/*
+!backend_fastapi/storage/uploads/.gitkeep
+backend_fastapi/storage/processed/*
+!backend_fastapi/storage/processed/.gitkeep
+
+# Flutter & Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+frontend_flutter/build/
+frontend_flutter/.dart_tool/
+frontend_flutter/.flutter-plugins
+frontend_flutter/.flutter-plugins-dependencies
+frontend_flutter/.packages
+frontend_flutter/.idea/
+*.log
+
+# macOS system files
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows system files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# IDEs and editors
+.idea/
+.vscode/
+*.swp
+*.swo
+*.iml
+frontend_flutter/*.iml

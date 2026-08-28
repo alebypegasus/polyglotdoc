@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend_fastapi
+      dockerfile: Dockerfile
+    container_name: polyglotdoc-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - AI_PROVIDER=gemini
+      - GEMINI_MODEL=gemini-3.5-flash
+    volumes:
+      - ./backend_fastapi/storage:/app/storage
+    depends_on:
+      - redis
+    networks:
+      - polyglotdoc-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: polyglotdoc-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - polyglotdoc-net
+
+networks:
+  polyglotdoc-net:
+    driver: bridge
+
+volumes:
+  redis-data:
